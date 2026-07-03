@@ -13,7 +13,7 @@ export async function register(req, res) {
   }
   const hashed = bcryptjs.hashSync(password, 10);
   const initial = name.charAt(0).toUpperCase();
-  const user = await User.create({ name, email, password: hashed, neighbourhood, avatar_initial: initial });
+  const user = await User.create({ name, email: email.toLowerCase(), password: hashed, neighbourhood, avatar_initial: initial });
   const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.status(201).json({
     token,
