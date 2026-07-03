@@ -11,11 +11,10 @@ async function seed() {
   await mongoose.connect(MONGODB_URI);
   console.log('Connected to MongoDB for seeding');
 
-  await Review.deleteMany({});
-  await Errand.deleteMany({});
-  await User.deleteMany({});
+  await mongoose.connection.db.dropDatabase();
 
   const password = bcryptjs.hashSync('password123', 10);
+  const adminPassword = bcryptjs.hashSync('admin123', 10);
 
   const userData = [
     { name: 'Akash Kumar', email: 'akash@local.com', neighbourhood: 'Kuniyamuthur', phone: '9876543210' },
@@ -30,7 +29,7 @@ async function seed() {
     { name: 'Karthik R', email: 'karthik@local.com', neighbourhood: 'Ganapathy', phone: '9876543219' },
   ];
 
-  const users = await User.create(
+  const regularUsers = await User.create(
     userData.map(u => ({
       ...u,
       password,
@@ -38,7 +37,18 @@ async function seed() {
     }))
   );
 
-  console.log(`  - ${users.length} users`);
+  const adminUser = await User.create({
+    name: 'Admin',
+    email: 'admin@local.com',
+    password: adminPassword,
+    neighbourhood: 'Kuniyamuthur',
+    phone: '9876543200',
+    avatar_initial: 'A',
+    role: 'admin',
+  });
+
+  const users = [...regularUsers, adminUser];
+  console.log(`  - ${users.length} users (9 regular + 1 admin)`);
 
   const errandData = [
     { title: 'Pick up groceries from Reliance Fresh', description: 'Need someone to pick up my weekly grocery order from Reliance Fresh in Kuniyamuthur. List will be shared. Near SKASC campus.', category: 'Grocery Run', reward: 100, urgency: 'Medium', location: 'Kuniyamuthur', lat: 10.8760, lng: 76.9550, deadline: '2026-07-16 18:00:00', status: 'Open', posted_by: 0 },
@@ -111,6 +121,7 @@ async function seed() {
   console.log();
   console.log('Database seeded successfully!');
   console.log('Test credentials:');
+  console.log('  admin@local.com / admin123 (admin)');
   console.log('  akash@local.com / password123');
   console.log('  bhavana@local.com / password123');
 

@@ -283,18 +283,19 @@ npm run seed
 
 ## 6. Test Credentials
 
-| Email | Password | Name | Neighbourhood |
-|-------|----------|------|---------------|
-| akash@local.com | password123 | Akash Kumar | Kuniyamuthur |
-| bhavana@local.com | password123 | Bhavana R | Sugunapuram |
-| charu@local.com | password123 | Charu Devi | Vadavalli |
-| dinesh@local.com | password123 | Dinesh S | Kovaipudur |
-| esha@local.com | password123 | Esha Mahesh | Saibaba Colony |
-| gowtham@local.com | password123 | Gowtham K | Gandhipuram |
-| harini@local.com | password123 | Harini V | R.S. Puram |
-| irfan@local.com | password123 | Irfan M | Peelamedu |
-| janani@local.com | password123 | Janani S | Singanallur |
-| karthik@local.com | password123 | Karthik R | Ganapathy |
+| Email | Password | Name | Neighbourhood | Role |
+|-------|----------|------|---------------|------|
+| admin@local.com | admin123 | Admin | Kuniyamuthur | admin |
+| akash@local.com | password123 | Akash Kumar | Kuniyamuthur | user |
+| bhavana@local.com | password123 | Bhavana R | Sugunapuram | user |
+| charu@local.com | password123 | Charu Devi | Vadavalli | user |
+| dinesh@local.com | password123 | Dinesh S | Kovaipudur | user |
+| esha@local.com | password123 | Esha Mahesh | Saibaba Colony | user |
+| gowtham@local.com | password123 | Gowtham K | Gandhipuram | user |
+| harini@local.com | password123 | Harini V | R.S. Puram | user |
+| irfan@local.com | password123 | Irfan M | Peelamedu | user |
+| janani@local.com | password123 | Janani S | Singanallur | user |
+| karthik@local.com | password123 | Karthik R | Ganapathy | user |
 
 ---
 

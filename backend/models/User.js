@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema({
   neighbourhood: { type: String, required: true },
   phone: { type: String, default: '' },
   avatar_initial: { type: String, default: '' },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 export default mongoose.model('User', userSchema);

@@ -8,6 +8,7 @@ import errandRoutes from './routes/errands.js';
 import dashboardRoutes from './routes/dashboard.js';
 import profileRoutes from './routes/profile.js';
 import reviewRoutes from './routes/reviews.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ app.use('/api/errands', errandRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/neighbourhoods', (req, res) => {
   const hoods = [

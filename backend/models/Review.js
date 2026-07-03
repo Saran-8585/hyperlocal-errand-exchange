@@ -15,6 +15,6 @@ const reviewSchema = new mongoose.Schema({
 }, { timestamps: { createdAt: 'created_at', updatedAt: false } });
 
 reviewSchema.index({ reviewee_id: 1, created_at: -1 });
-reviewSchema.index({ errand_id: 1, reviewer_id: 1 }, { unique: true });
+reviewSchema.index({ errand_id: 1, reviewer_id: 1 });
 
 export default mongoose.model('Review', reviewSchema);

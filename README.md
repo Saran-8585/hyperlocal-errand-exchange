@@ -675,20 +675,21 @@ The browse page displays all open errands as a card grid:
 
 ### 9.1 Test Accounts
 
-The seed script creates 10 user accounts for testing:
+The seed script creates 11 user accounts for testing (10 regular + 1 admin):
 
-| Email | Password | Neighbourhood |
-|-------|----------|---------------|
-| akash@local.com | password123 | Kuniyamuthur |
-| bhavana@local.com | password123 | Sugunapuram |
-| charu@local.com | password123 | Vadavalli |
-| dinesh@local.com | password123 | Kovaipudur |
-| esha@local.com | password123 | Saibaba Colony |
-| gowtham@local.com | password123 | Gandhipuram |
-| harini@local.com | password123 | R.S. Puram |
-| irfan@local.com | password123 | Peelamedu |
-| janani@local.com | password123 | Singanallur |
-| karthik@local.com | password123 | Ganapathy |
+| Email | Password | Neighbourhood | Role |
+|-------|----------|---------------|------|
+| admin@local.com | admin123 | Kuniyamuthur | admin |
+| akash@local.com | password123 | Kuniyamuthur | user |
+| bhavana@local.com | password123 | Sugunapuram | user |
+| charu@local.com | password123 | Vadavalli | user |
+| dinesh@local.com | password123 | Kovaipudur | user |
+| esha@local.com | password123 | Saibaba Colony | user |
+| gowtham@local.com | password123 | Gandhipuram | user |
+| harini@local.com | password123 | R.S. Puram | user |
+| irfan@local.com | password123 | Peelamedu | user |
+| janani@local.com | password123 | Singanallur | user |
+| karthik@local.com | password123 | Ganapathy | user |
 
 ### 9.2 Sample Test Scenarios
 

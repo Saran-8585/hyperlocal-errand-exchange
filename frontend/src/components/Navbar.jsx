@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import {LogOut, PlusCircle, LayoutDashboard, User, Home} from 'lucide-react';
+import {LogOut, PlusCircle, LayoutDashboard, User, Home, Shield} from 'lucide-react';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -36,6 +36,11 @@ export default function Navbar() {
                 <Link to="/dashboard" className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-primary rounded-lg hover:bg-gray-50 transition">
                   <LayoutDashboard size={18} /> <span className="hidden sm:inline">Dashboard</span>
                 </Link>
+                {isAdmin && (
+                  <Link to="/admin" className="flex items-center gap-1.5 px-3 py-2 text-sm text-purple-600 hover:text-purple-700 rounded-lg hover:bg-purple-50 transition">
+                    <Shield size={18} /> <span className="hidden sm:inline">Admin</span>
+                  </Link>
+                )}
                 <Link to={`/profile/${user.id}`} className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-primary rounded-lg hover:bg-gray-50 transition">
                   <User size={18} /> <span className="hidden sm:inline">Profile</span>
                 </Link>
