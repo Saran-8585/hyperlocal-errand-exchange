@@ -7,7 +7,7 @@ import { CardSkeleton } from '../components/Skeleton';
 import api from '../utils/axios';
 import { Edit3, Save, X, Mail, MapPin, Phone, FileText, CheckCircle2, Star, MessageSquare } from 'lucide-react';
 
-const neighbourhoods = ['Koramangala', 'Indiranagar', 'HSR Layout', 'JP Nagar', 'Whitefield', 'MG Road', 'Jayanagar', 'BTM Layout', 'Electronic City', 'Malleshwaram'];
+const neighbourhoods = ['Kuniyamuthur', 'Sugunapuram', 'Vadavalli', 'Kovaipudur', 'R.S. Puram', 'Gandhipuram', 'Saibaba Colony', 'Peelamedu', 'Singanallur', 'Ganapathy'];
 
 export default function Profile() {
   const { id } = useParams();
@@ -23,7 +23,7 @@ export default function Profile() {
   const [reviewData, setReviewData] = useState({ errand_id: '', rating: 5, comment: '' });
   const [reviewing, setReviewing] = useState(false);
 
-  const isOwnProfile = user && user.id === Number(id);
+  const isOwnProfile = user && String(user.id) === String(id);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -59,8 +59,8 @@ export default function Profile() {
     setReviewing(true);
     try {
       await api.post('/reviews', {
-        errand_id: Number(reviewData.errand_id),
-        reviewee_id: Number(id),
+        errand_id: reviewData.errand_id,
+        reviewee_id: id,
         rating: reviewData.rating,
         comment: reviewData.comment,
       });

@@ -1,36 +1,48 @@
-import db from '../db/database.js';
+import Errand from '../models/Errand.js';
 
-export function getPosted(req, res) {
-  const errands = db.prepare(`
-    SELECT e.*, u.name AS claimed_name, u.avatar_initial AS claimed_avatar
-    FROM errands e
-    LEFT JOIN users u ON e.claimed_by = u.id
-    WHERE e.posted_by = ?
-    ORDER BY e.created_at DESC
-  `).all(req.user.id);
-  res.json(errands);
+export async function getPosted(req, res) {
+  const errands = await Errand.find({ posted_by: req.user.id })
+    .populate('claimed_by', 'name avatar_initial')
+    .sort({ created_at: -1 })
+    .lean();
+
+  const mapped = errands.map(e => ({
+    ...e,
+    id: e._id,
+    claimed_name: e.claimed_by?.name,
+    claimed_avatar: e.claimed_by?.avatar_initial,
+  }));
+
+  res.json(mapped);
 }
 
-export function getClaimed(req, res) {
-  const errands = db.prepare(`
-    SELECT e.*, u.name AS poster_name, u.neighbourhood AS poster_neighbourhood, u.avatar_initial AS poster_avatar
-    FROM errands e
-    JOIN users u ON e.posted_by = u.id
-    WHERE e.claimed_by = ?
-    ORDER BY e.created_at DESC
-  `).all(req.user.id);
-  res.json(errands);
+export async function getClaimed(req, res) {
+  const errands = await Errand.find({ claimed_by: req.user.id })
+    .populate('posted_by', 'name neighbourhood avatar_initial')
+    .sort({ created_at: -1 })
+    .lean();
+
+  const mapped = errands.map(e => ({
+    ...e,
+    id: e._id,
+    poster_name: e.posted_by?.name,
+    poster_neighbourhood: e.posted_by?.neighbourhood,
+    poster_avatar: e.posted_by?.avatar_initial,
+  }));
+
+  res.json(mapped);
 }
 
-export function getStats(req, res) {
-  const posted = db.prepare('SELECT COUNT(*) AS count FROM errands WHERE posted_by = ?').get(req.user.id);
-  const claimed = db.prepare('SELECT COUNT(*) AS count FROM errands WHERE claimed_by = ?').get(req.user.id);
-  const completed = db.prepare("SELECT COUNT(*) AS count FROM errands WHERE claimed_by = ? AND status = 'Completed'").get(req.user.id);
-  const earnings = db.prepare("SELECT COALESCE(SUM(reward), 0) AS total FROM errands WHERE claimed_by = ? AND status = 'Completed'").get(req.user.id);
-  res.json({
-    posted: posted.count,
-    claimed: claimed.count,
-    completed: completed.count,
-    earnings: earnings.total
-  });
+export async function getStats(req, res) {
+  const userId = req.user.id;
+  const posted = await Errand.countDocuments({ posted_by: userId });
+  const claimed = await Errand.countDocuments({ claimed_by: userId });
+  const completed = await Errand.countDocuments({ claimed_by: userId, status: 'Completed' });
+  const earningsResult = await Errand.aggregate([
+    { $match: { claimed_by: userId, status: 'Completed' } },
+    { $group: { _id: null, total: { $sum: '$reward' } } },
+  ]);
+  const earnings = earningsResult.length > 0 ? earningsResult[0].total : 0;
+
+  res.json({ posted, claimed, completed, earnings });
 }

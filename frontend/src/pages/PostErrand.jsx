@@ -6,7 +6,7 @@ import { DraggableMap } from '../components/ErrandMap';
 import api from '../utils/axios';
 
 const categories = ['Grocery Run', 'Parcel Drop', 'Pet Care', 'Home Help', 'Tech Help', 'Other'];
-const neighbourhoods = ['Koramangala', 'Indiranagar', 'HSR Layout', 'JP Nagar', 'Whitefield', 'MG Road', 'Jayanagar', 'BTM Layout', 'Electronic City', 'Malleshwaram'];
+const neighbourhoods = ['Kuniyamuthur', 'Sugunapuram', 'Vadavalli', 'Kovaipudur', 'R.S. Puram', 'Gandhipuram', 'Saibaba Colony', 'Peelamedu', 'Singanallur', 'Ganapathy'];
 
 export default function PostErrand() {
   const { user } = useAuth();
@@ -15,7 +15,7 @@ export default function PostErrand() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', category: '', reward: '', urgency: 'Medium',
-    location_name: '', latitude: 12.97, longitude: 77.59, deadline: ''
+    location_name: '', latitude: 10.9379, longitude: 76.9592, deadline: ''
   });
 
   function update(field, value) {

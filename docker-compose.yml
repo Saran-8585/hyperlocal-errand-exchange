@@ -1,0 +1,40 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: hyperlocal-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: hyperlocal-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - PORT=5001
+      - JWT_SECRET=hyperlocal_errand_jwt_secret_key_2024
+      - MONGODB_URI=mongodb://mongodb:27017/hyperlocal_errand
+      - NODE_ENV=production
+
+  frontend:
+    build: ./frontend
+    container_name: hyperlocal-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

@@ -1,91 +1,133 @@
-import db from '../db/database.js';
+import Errand from '../models/Errand.js';
+import Review from '../models/Review.js';
 
-export function getAll(req, res) {
+export async function getAll(req, res) {
   const { category, urgency, neighbourhood, search, minReward, maxReward } = req.query;
-  let sql = `
-    SELECT e.*, u.name AS poster_name, u.neighbourhood AS poster_neighbourhood, u.avatar_initial AS poster_avatar,
-      (SELECT AVG(rating) FROM reviews WHERE reviewee_id = e.claimed_by) AS runner_rating
-    FROM errands e
-    JOIN users u ON e.posted_by = u.id
-    WHERE e.status = 'Open'
-  `;
-  const params = [];
+  const filter = { status: 'Open' };
 
-  if (category) { sql += ' AND e.category = ?'; params.push(category); }
-  if (urgency) { sql += ' AND e.urgency = ?'; params.push(urgency); }
-  if (neighbourhood) { sql += ' AND e.location_name = ?'; params.push(neighbourhood); }
-  if (search) { sql += ' AND (e.title LIKE ? OR e.description LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
-  if (minReward) { sql += ' AND e.reward >= ?'; params.push(Number(minReward)); }
-  if (maxReward) { sql += ' AND e.reward <= ?'; params.push(Number(maxReward)); }
+  if (category) filter.category = category;
+  if (urgency) filter.urgency = urgency;
+  if (neighbourhood) filter.location_name = neighbourhood;
+  if (minReward || maxReward) {
+    filter.reward = {};
+    if (minReward) filter.reward.$gte = Number(minReward);
+    if (maxReward) filter.reward.$lte = Number(maxReward);
+  }
+  if (search) {
+    const regex = new RegExp(search, 'i');
+    filter.$or = [{ title: regex }, { description: regex }];
+  }
 
-  sql += ' ORDER BY e.created_at DESC';
-  const errands = db.prepare(sql).all(...params);
-  res.json(errands);
+  const errands = await Errand.find(filter)
+    .populate('posted_by', 'name neighbourhood avatar_initial')
+    .sort({ created_at: -1 })
+    .lean();
+
+  const enriched = await Promise.all(errands.map(async (e) => {
+    const rating = e.claimed_by
+      ? await getAvgRating(e.claimed_by)
+      : null;
+    return {
+      ...e,
+      id: e._id,
+      poster_name: e.posted_by?.name,
+      poster_neighbourhood: e.posted_by?.neighbourhood,
+      poster_avatar: e.posted_by?.avatar_initial,
+      runner_rating: rating,
+    };
+  }));
+
+  res.json(enriched);
 }
 
-export function getOne(req, res) {
-  const errand = db.prepare(`
-    SELECT e.*, u.name AS poster_name, u.neighbourhood AS poster_neighbourhood, u.avatar_initial AS poster_avatar, u.phone AS poster_phone,
-      c.name AS claimed_name, c.avatar_initial AS claimed_avatar,
-      (SELECT AVG(rating) FROM reviews WHERE reviewee_id = e.claimed_by) AS runner_rating
-    FROM errands e
-    JOIN users u ON e.posted_by = u.id
-    LEFT JOIN users c ON e.claimed_by = c.id
-    WHERE e.id = ?
-  `).get(req.params.id);
+export async function getOne(req, res) {
+  const errand = await Errand.findById(req.params.id)
+    .populate('posted_by', 'name neighbourhood avatar_initial phone')
+    .populate('claimed_by', 'name avatar_initial')
+    .lean();
+
   if (!errand) return res.status(404).json({ error: 'Errand not found' });
-  res.json(errand);
+
+  const rating = errand.claimed_by ? await getAvgRating(errand.claimed_by._id) : null;
+
+  res.json({
+    ...errand,
+    id: errand._id,
+    poster_name: errand.posted_by?.name,
+    poster_neighbourhood: errand.posted_by?.neighbourhood,
+    poster_avatar: errand.posted_by?.avatar_initial,
+    poster_phone: errand.posted_by?.phone,
+    claimed_name: errand.claimed_by?.name,
+    claimed_avatar: errand.claimed_by?.avatar_initial,
+    runner_rating: rating,
+  });
 }
 
-export function create(req, res) {
+export async function create(req, res) {
   const { title, description, category, reward, reward_type, urgency, location_name, latitude, longitude, deadline } = req.body;
   if (!title || !description || !category || !location_name || !latitude || !longitude || !deadline) {
     return res.status(400).json({ error: 'Required fields missing' });
   }
-  const result = db.prepare(`
-    INSERT INTO errands (title, description, category, reward, reward_type, urgency, location_name, latitude, longitude, deadline, posted_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(title, description, category, reward || 0, reward_type || '₹', urgency || 'Medium', location_name, latitude, longitude, deadline, req.user.id);
-  const errand = db.prepare('SELECT * FROM errands WHERE id = ?').get(result.lastInsertRowid);
+  const errand = await Errand.create({
+    title, description, category,
+    reward: reward || 0,
+    reward_type: reward_type || '₹',
+    urgency: urgency || 'Medium',
+    location_name, latitude, longitude, deadline,
+    posted_by: req.user.id,
+  });
   res.status(201).json(errand);
 }
 
-export function claim(req, res) {
-  const errand = db.prepare('SELECT * FROM errands WHERE id = ?').get(req.params.id);
+export async function claim(req, res) {
+  const errand = await Errand.findById(req.params.id);
   if (!errand) return res.status(404).json({ error: 'Errand not found' });
   if (errand.status !== 'Open') return res.status(400).json({ error: 'Errand is not available' });
-  if (errand.posted_by === req.user.id) return res.status(403).json({ error: 'You cannot claim your own errand' });
+  if (errand.posted_by.toString() === req.user.id) return res.status(403).json({ error: 'You cannot claim your own errand' });
 
-  try {
-    const result = db.prepare(
-      "UPDATE errands SET status = 'Claimed', claimed_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'Open'"
-    ).run(req.user.id, req.params.id);
-    if (result.changes === 0) return res.status(409).json({ error: 'Errand was already claimed' });
-    const updated = db.prepare('SELECT * FROM errands WHERE id = ?').get(req.params.id);
-    res.json(updated);
-  } catch {
-    res.status(500).json({ error: 'Failed to claim errand' });
-  }
+  const updated = await Errand.findOneAndUpdate(
+    { _id: req.params.id, status: 'Open' },
+    { status: 'Claimed', claimed_by: req.user.id },
+    { new: true }
+  );
+  if (!updated) return res.status(409).json({ error: 'Errand was already claimed' });
+  res.json(updated);
 }
 
-export function complete(req, res) {
-  const errand = db.prepare('SELECT * FROM errands WHERE id = ?').get(req.params.id);
+export async function complete(req, res) {
+  const errand = await Errand.findById(req.params.id);
   if (!errand) return res.status(404).json({ error: 'Errand not found' });
-  if (errand.claimed_by !== req.user.id) return res.status(403).json({ error: 'Only the claimed runner can mark as complete' });
+  if (!errand.claimed_by || errand.claimed_by.toString() !== req.user.id) {
+    return res.status(403).json({ error: 'Only the claimed runner can mark as complete' });
+  }
   if (errand.status !== 'Claimed') return res.status(400).json({ error: 'Errand must be claimed first' });
 
-  db.prepare("UPDATE errands SET status = 'Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
-  const updated = db.prepare('SELECT * FROM errands WHERE id = ?').get(req.params.id);
+  const updated = await Errand.findByIdAndUpdate(
+    req.params.id,
+    { status: 'Completed' },
+    { new: true }
+  );
   res.json(updated);
 }
 
-export function cancel(req, res) {
-  const errand = db.prepare('SELECT * FROM errands WHERE id = ?').get(req.params.id);
+export async function cancel(req, res) {
+  const errand = await Errand.findById(req.params.id);
   if (!errand) return res.status(404).json({ error: 'Errand not found' });
-  if (errand.posted_by !== req.user.id) return res.status(403).json({ error: 'Only the poster can cancel' });
+  if (errand.posted_by.toString() !== req.user.id) return res.status(403).json({ error: 'Only the poster can cancel' });
   if (errand.status !== 'Open') return res.status(400).json({ error: 'Can only cancel open errands' });
 
-  db.prepare("UPDATE errands SET status = 'Cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
-  const updated = db.prepare('SELECT * FROM errands WHERE id = ?').get(req.params.id);
+  const updated = await Errand.findByIdAndUpdate(
+    req.params.id,
+    { status: 'Cancelled' },
+    { new: true }
+  );
   res.json(updated);
+}
+
+async function getAvgRating(userId) {
+  const result = await Review.aggregate([
+    { $match: { reviewee_id: userId } },
+    { $group: { _id: null, avg: { $avg: '$rating' } } },
+  ]);
+  return result.length > 0 ? Math.round(result[0].avg * 10) / 10 : null;
 }

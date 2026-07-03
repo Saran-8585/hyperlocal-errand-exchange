@@ -7,7 +7,7 @@ import { Map, Grid3X3, Search, SlidersHorizontal, X } from 'lucide-react';
 
 const categories = ['Grocery Run', 'Parcel Drop', 'Pet Care', 'Home Help', 'Tech Help', 'Other'];
 const urgencies = ['Low', 'Medium', 'High'];
-const neighbourhoods = ['Koramangala', 'Indiranagar', 'HSR Layout', 'JP Nagar', 'Whitefield', 'MG Road', 'Jayanagar', 'BTM Layout', 'Electronic City', 'Malleshwaram'];
+const neighbourhoods = ['Kuniyamuthur', 'Sugunapuram', 'Vadavalli', 'Kovaipudur', 'R.S. Puram', 'Gandhipuram', 'Saibaba Colony', 'Peelamedu', 'Singanallur', 'Ganapathy'];
 
 export default function Browse() {
   const [errands, setErrands] = useState([]);

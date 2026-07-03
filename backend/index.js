@@ -1,6 +1,8 @@
 import 'dotenv/config';
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
+import { connectDB } from './db/database.js';
 import authRoutes from './routes/auth.js';
 import errandRoutes from './routes/errands.js';
 import dashboardRoutes from './routes/dashboard.js';
@@ -21,8 +23,9 @@ app.use('/api/reviews', reviewRoutes);
 
 app.get('/api/neighbourhoods', (req, res) => {
   const hoods = [
-    'Koramangala', 'Indiranagar', 'HSR Layout', 'JP Nagar', 'Whitefield',
-    'MG Road', 'Jayanagar', 'BTM Layout', 'Electronic City', 'Malleshwaram'
+    'Kuniyamuthur', 'Sugunapuram', 'Vadavalli', 'Kovaipudur',
+    'R.S. Puram', 'Gandhipuram', 'Saibaba Colony', 'Peelamedu',
+    'Singanallur', 'Ganapathy'
   ];
   res.json(hoods);
 });
@@ -32,7 +35,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-function startServer(port) {
+async function startServer(port) {
+  await connectDB();
   const server = app.listen(port);
   server.on('listening', () => {
     console.log(`Server running on http://localhost:${port}`);

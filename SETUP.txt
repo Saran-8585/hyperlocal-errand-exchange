@@ -1,0 +1,298 @@
+================================================================================
+                   HYPERLOCAL ERRAND EXCHANGE - SETUP GUIDE
+================================================================================
+
+This document provides step-by-step instructions for installing, configuring,
+and running the Hyperlocal Errand Exchange application.
+
+===============================================================================
+1. PREREQUISITES
+===============================================================================
+
+  Requirement     Version         Verification Command
+  -----------     -------         ---------------------
+  Node.js         20.x or higher  node --version
+  npm             9.x or higher   npm --version
+  MongoDB         7.x             mongod --version or docker --version
+  Git             Latest          git --version
+  Docker (opt)    Latest          docker --version
+  Docker Compose  Latest          docker compose version
+
+===============================================================================
+2. OPTION 1: MANUAL SETUP (DEVELOPMENT)
+===============================================================================
+
+Step 2.1: Clone the Repository
+--------------------------------
+
+  git clone <repository-url>
+  cd hyperlocal-errand-exchange
+
+Step 2.2: Backend - Install Dependencies
+------------------------------------------
+
+  cd backend
+  npm install
+
+Step 2.3: Configure Environment Variables
+-------------------------------------------
+
+  Edit backend/.env (already exists with defaults):
+
+    PORT=5001
+    JWT_SECRET=hyperlocal_errand_jwt_secret_key_2024
+    MONGODB_URI=mongodb://localhost:27017/hyperlocal_errand
+
+Step 2.4: Start MongoDB
+--------------------------
+
+  Option A - Local installation:
+    mongod --dbpath /data/db
+
+  Option B - Docker container:
+    docker run -d -p 27017:27017 --name hyperlocal-mongo mongo:7
+
+Step 2.5: Seed the Database
+------------------------------
+
+  npm run seed
+
+  Expected output:
+    Connected to MongoDB for seeding
+      - 10 users
+      - 20 errands
+      - 8 reviews
+    Database seeded successfully!
+    Test credentials:
+      akash@local.com / password123
+      bhavana@local.com / password123
+
+Step 2.6: Start the Backend Server
+-------------------------------------
+
+  npm run dev
+
+  Server runs at http://localhost:5001
+
+Step 2.7: Frontend - Install Dependencies (New Terminal)
+----------------------------------------------------------
+
+  cd frontend
+  npm install
+
+Step 2.8: Start the Frontend Dev Server
+------------------------------------------
+
+  npm run dev
+
+  App opens at http://localhost:5173
+
+  The Vite dev server proxies /api requests to http://localhost:5001
+  (configured in frontend/vite.config.js)
+
+Step 2.9: Verify
+------------------
+
+  1. Open http://localhost:5173 in your browser
+  2. Browse page shows seeded errands on the map
+  3. Click "Create account" to register a new user
+  4. Try filters, map toggle, and explore errands
+
+===============================================================================
+3. OPTION 2: DOCKER SETUP (PRODUCTION)
+===============================================================================
+
+Step 3.1: Clone the Repository
+--------------------------------
+
+  git clone <repository-url>
+  cd hyperlocal-errand-exchange
+
+Step 3.2: Build and Start All Services
+-----------------------------------------
+
+  docker compose up -d
+
+  This starts three containers:
+    - hyperlocal-mongodb   (MongoDB 7 on port 27017)
+    - hyperlocal-backend   (Node.js API on port 5001)
+    - hyperlocal-frontend  (Nginx serving React on port 80)
+
+Step 3.3: Verify Containers Are Running
+-----------------------------------------
+
+  docker compose ps
+
+  Expected:
+    NAME                    STATUS
+    hyperlocal-mongodb      Up (healthy)
+    hyperlocal-backend      Up
+    hyperlocal-frontend     Up
+
+Step 3.4: Seed the Database
+------------------------------
+
+  docker exec -it hyperlocal-backend npm run seed
+
+Step 3.5: Access the Application
+-----------------------------------
+
+  Open http://localhost in your browser.
+
+  Nginx serves the built React app and forwards /api requests to the backend.
+
+Step 3.6: View Logs (Optional)
+--------------------------------
+
+  docker compose logs -f
+
+Step 3.7: Stop All Services
+------------------------------
+
+  docker compose down
+
+  To remove MongoDB data volume:
+    docker compose down -v
+
+===============================================================================
+4. ENVIRONMENT VARIABLES
+===============================================================================
+
+  Variable        Default                                                  Description
+  --------        -------                                                  -----------
+  PORT            5001                                                     Backend port
+  JWT_SECRET      hyperlocal_errand_jwt_secret_key_2024                    JWT signing key
+  MONGODB_URI     mongodb://localhost:27017/hyperlocal_errand              MongoDB connection
+
+  The .env file is located at: backend/.env
+
+===============================================================================
+5. DATABASE SEEDING
+===============================================================================
+
+  What the seed creates:
+    - 10 users (one per Coimbatore neighbourhood)
+    - 20 errands (various categories around SKASC area)
+    - 8 reviews (on completed/claimed errands)
+
+  To re-seed:
+    npm run seed
+
+  WARNING: This deletes all existing data before inserting sample data.
+
+===============================================================================
+6. TEST CREDENTIALS
+===============================================================================
+
+  Email                   Password        Name            Neighbourhood
+  -----                   --------        ----            -------------
+  akash@local.com         password123     Akash Kumar     Kuniyamuthur
+  bhavana@local.com       password123     Bhavana R       Sugunapuram
+  charu@local.com         password123     Charu Devi      Vadavalli
+  dinesh@local.com        password123     Dinesh S        Kovaipudur
+  esha@local.com          password123     Esha Mahesh     Saibaba Colony
+  gowtham@local.com       password123     Gowtham K       Gandhipuram
+  harini@local.com        password123     Harini V        R.S. Puram
+  irfan@local.com         password123     Irfan M         Peelamedu
+  janani@local.com        password123     Janani S        Singanallur
+  karthik@local.com       password123     Karthik R       Ganapathy
+
+===============================================================================
+7. TROUBLESHOOTING
+===============================================================================
+
+Issue: MongoDB Connection Refused
+----------------------------------
+  Error: connect ECONNREFUSED 127.0.0.1:27017
+  Fix: Ensure MongoDB is running. Start it with:
+    docker start hyperlocal-mongo
+    or: mongod --dbpath /data/db
+
+Issue: Port Already in Use
+----------------------------
+  Fix: Kill the existing process:
+    lsof -i :5001
+    kill -9 <PID>
+  The app also auto-increments the port if the specified one is busy.
+
+Issue: Frontend Cannot Reach Backend
+---------------------------------------
+  Fix:
+    - Ensure backend is running on port 5001
+    - Check Vite proxy in frontend/vite.config.js
+    - For Docker: docker compose logs backend
+
+Issue: Seed Script Fails
+--------------------------
+  Fix:
+    - Ensure MongoDB is accessible
+    - Check MONGODB_URI in .env
+    - Re-run npm install
+
+Issue: Docker Build Fails
+---------------------------
+  Fix:
+    - docker compose down && docker compose up -d --build
+    - Check disk space
+    - Ensure ports 80, 5001, 27017 are free
+
+Issue: Map Tiles Not Loading
+------------------------------
+  Fix:
+    - Check internet connectivity (tiles from OpenStreetMap)
+    - Switch to a network that allows tile.openstreetmap.org
+    - Markers still work without visible tiles
+
+===============================================================================
+8. PROJECT STRUCTURE (KEY PATHS)
+===============================================================================
+
+  hyperlocal-errand-exchange/
+  |-- docker-compose.yml
+  |-- README.md
+  |-- SETUP.md
+  |-- SETUP.txt
+  |-- backend/
+  |   |-- .env
+  |   |-- Dockerfile
+  |   |-- .dockerignore
+  |   |-- package.json
+  |   |-- index.js
+  |   |-- db/
+  |   |   |-- database.js
+  |   |   |-- seed.js
+  |   |-- models/
+  |   |   |-- User.js
+  |   |   |-- Errand.js
+  |   |   |-- Review.js
+  |   |-- controllers/
+  |   |   |-- authController.js
+  |   |   |-- errandController.js
+  |   |   |-- dashboardController.js
+  |   |   |-- profileController.js
+  |   |   |-- reviewController.js
+  |   |-- routes/
+  |   |   |-- auth.js
+  |   |   |-- errands.js
+  |   |   |-- dashboard.js
+  |   |   |-- profile.js
+  |   |   |-- reviews.js
+  |   |-- middleware/
+  |       |-- auth.js
+  |-- frontend/
+      |-- Dockerfile
+      |-- nginx.conf
+      |-- .dockerignore
+      |-- package.json
+      |-- vite.config.js
+      |-- src/
+          |-- main.jsx
+          |-- App.jsx
+          |-- context/AuthContext.jsx
+          |-- components/ (7 files)
+          |-- pages/ (7 files)
+          |-- utils/axios.js
+
+===============================================================================
+                             END OF SETUP GUIDE
+===============================================================================

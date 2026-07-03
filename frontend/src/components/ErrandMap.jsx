@@ -29,7 +29,7 @@ function FitBounds({ errands }) {
 
 export function BrowseMap({ errands }) {
   return (
-    <MapContainer center={[12.97, 77.59]} zoom={12} className="w-full h-[400px] rounded-xl z-0" scrollWheelZoom={true}>
+    <MapContainer center={[10.9379, 76.9592]} zoom={12} className="w-full h-[400px] rounded-xl z-0" scrollWheelZoom={true}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FitBounds errands={errands} />
       {errands.map(e => (

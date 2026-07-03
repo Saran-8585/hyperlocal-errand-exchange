@@ -5,8 +5,9 @@ import { useToast } from '../components/Toast';
 import api from '../utils/axios';
 
 const neighbourhoods = [
-  'Koramangala', 'Indiranagar', 'HSR Layout', 'JP Nagar', 'Whitefield',
-  'MG Road', 'Jayanagar', 'BTM Layout', 'Electronic City', 'Malleshwaram'
+  'Kuniyamuthur', 'Sugunapuram', 'Vadavalli', 'Kovaipudur',
+  'R.S. Puram', 'Gandhipuram', 'Saibaba Colony', 'Peelamedu',
+  'Singanallur', 'Ganapathy'
 ];
 
 export default function Register() {

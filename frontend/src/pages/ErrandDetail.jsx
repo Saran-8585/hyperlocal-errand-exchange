@@ -91,8 +91,8 @@ export default function ErrandDetail() {
   if (loading) return <div className="max-w-3xl mx-auto px-4 py-8"><CardSkeleton /></div>;
   if (!errand) return null;
 
-  const isPoster = user && user.id === errand.posted_by;
-  const isClaimer = user && user.id === errand.claimed_by;
+  const isPoster = user && String(user.id) === String(errand.posted_by);
+  const isClaimer = user && String(user.id) === String(errand.claimed_by);
   const expired = new Date(errand.deadline) < new Date();
 
   return (
